@@ -20,6 +20,24 @@ class _UserFormState extends State<UserForm> {
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: [
+              Expanded(
+                  child: StreamBuilder(
+                    stream:
+                    FirebaseFirestore.instance.collection('user').snapshots(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<QuerySnapshot> snapshot) {
+                      return ListView.builder(
+                          itemCount: snapshot.data?.docs.length,
+                          itemBuilder: (context, index) {
+                            return ListTile(
+                              trailing: IconButton(
+                                  onPressed: () {}, icon: const Icon(Icons.delete)),
+                              title: Text(snapshot.data!.docs[index]['name']),
+                              subtitle: Text(snapshot.data!.docs[index]['email']),
+                            );
+                          });
+                    },
+                  )),
               Column(
                 children: [
                   TextField(
@@ -52,21 +70,23 @@ class _UserFormState extends State<UserForm> {
                     color: Colors.blueAccent.shade100,
                     textColor: Colors.white,
                     onPressed: () {
-                      FirebaseFirestore.instance.collection('user').doc().set({
-                        "Name":_name.text,
-                        "Email":_email.text
-                      });
+                      Map<String, String> dataToSave = {
+                        'name': _name.text,
+                        'email': _email.text
+                      };
+                      FirebaseFirestore.instance
+                          .collection('user')
+                          .add(dataToSave);
+                      // FirebaseFirestore.instance
+                      //     .collection('user')
+                      //     .doc()
+                      //     .set({"Name": _name.text, "Email": _email.text});
                     },
                     child: const Text("Submit"),
                   )
                 ],
               ),
-              Expanded(child: ListView.builder(itemBuilder: (context,index){
-                return ListTile(
-                  title: Text("Title"),
-                  subtitle: Text("Subtitle"),
-                );
-              }))
+
             ],
           ),
         ),
