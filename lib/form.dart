@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 class UserForm extends StatefulWidget {
   const UserForm({Key? key}) : super(key: key);
@@ -22,22 +24,29 @@ class _UserFormState extends State<UserForm> {
             children: [
               Expanded(
                   child: StreamBuilder(
-                    stream:
+                stream:
                     FirebaseFirestore.instance.collection('user').snapshots(),
-                    builder: (BuildContext context,
-                        AsyncSnapshot<QuerySnapshot> snapshot) {
-                      return ListView.builder(
-                          itemCount: snapshot.data?.docs.length,
-                          itemBuilder: (context, index) {
-                            return ListTile(
-                              trailing: IconButton(
-                                  onPressed: () {}, icon: const Icon(Icons.delete)),
-                              title: Text(snapshot.data!.docs[index]['name']),
-                              subtitle: Text(snapshot.data!.docs[index]['email']),
-                            );
-                          });
-                    },
-                  )),
+                builder: (BuildContext context,
+                    AsyncSnapshot<QuerySnapshot> snapshot) {
+                  return ListView.builder(
+                      itemCount: snapshot.data?.docs.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          trailing: IconButton(
+                              onPressed: () {
+                                FirebaseFirestore.instance
+                                    .collection('user')
+                                    .doc(
+                                        snapshot.data!.docs[index].reference.id)
+                                    .delete();
+                              },
+                              icon: const Icon(Icons.delete)),
+                          title: Text(snapshot.data!.docs[index]['Name']),
+                          subtitle: Text(snapshot.data!.docs[index]['Email']),
+                        );
+                      });
+                },
+              )),
               Column(
                 children: [
                   TextField(
@@ -70,23 +79,17 @@ class _UserFormState extends State<UserForm> {
                     color: Colors.blueAccent.shade100,
                     textColor: Colors.white,
                     onPressed: () {
-                      Map<String, String> dataToSave = {
-                        'name': _name.text,
-                        'email': _email.text
-                      };
-                      FirebaseFirestore.instance
-                          .collection('user')
-                          .add(dataToSave);
-                      // FirebaseFirestore.instance
-                      //     .collection('user')
-                      //     .doc()
-                      //     .set({"Name": _name.text, "Email": _email.text});
+                      FirebaseFirestore.instance.collection('user').doc().set(
+                          {"Name": _name.text, "Email": _email.text});
+                      setState(() {
+                        _email.text = "";
+                        _name.text = "";
+                      });
                     },
                     child: const Text("Submit"),
                   )
                 ],
               ),
-
             ],
           ),
         ),
