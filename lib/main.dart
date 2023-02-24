@@ -1,5 +1,5 @@
+import 'package:firebase/home.dart';
 import 'package:flutter/material.dart';
-import 'form.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 Future<void> main() async {
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
       ),
-      home: const UserForm(),
+      home: const HomeListScreen(),
     );
   }
 }
