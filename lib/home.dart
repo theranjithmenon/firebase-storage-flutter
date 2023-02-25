@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+import 'googleSignIn.dart';
 
 class HomeListScreen extends StatefulWidget {
   const HomeListScreen({Key? key}) : super(key: key);
@@ -9,23 +12,51 @@ class HomeListScreen extends StatefulWidget {
 }
 
 class _HomeListScreenState extends State<HomeListScreen> {
-  final TextEditingController _name = TextEditingController();
-  final TextEditingController _email = TextEditingController();
+  final TextEditingController _firstName = TextEditingController();
+  final TextEditingController _secondName = TextEditingController();
+  final user = FirebaseAuth.instance.currentUser!;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: CircleAvatar(
+          backgroundImage: NetworkImage(user.photoURL.toString()),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              user.displayName.toString(),
+              style: const TextStyle(fontSize: 15),
+            ),
+            Text(
+              user.email.toString(),
+              style: const TextStyle(fontSize: 15),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+              onPressed: () async{
+                await GoogleAuth().logout();
+              },
+              icon: const Icon(Icons.logout))
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           _addTo();
         },
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
       body: StreamBuilder(
-        stream: FirebaseFirestore.instance.collection('user').snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection(user.email.toString())
+            .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.data!.docs.length == 0) {
-            return Center(child: Text("empty"));
+            return const Center(child: Text("empty"));
           }
           return ListView.builder(
               itemCount: snapshot.data?.docs.length,
@@ -34,18 +65,18 @@ class _HomeListScreenState extends State<HomeListScreen> {
                   leading: IconButton(
                       onPressed: () {
                         _editData(
-                            snapshot.data!.docs[index]['Name'],
-                            snapshot.data!.docs[index]['Email'],
+                            snapshot.data!.docs[index]['FirstName'],
+                            snapshot.data!.docs[index]['SecondName'],
                             snapshot.data!.docs[index].reference.id);
                       },
-                      icon: Icon(Icons.edit)),
+                      icon: const Icon(Icons.edit)),
                   trailing: IconButton(
                       onPressed: () {
                         _deleteData(snapshot, index);
                       },
                       icon: const Icon(Icons.delete)),
-                  title: Text(snapshot.data!.docs[index]['Name']),
-                  subtitle: Text(snapshot.data!.docs[index]['Email']),
+                  title: Text(snapshot.data!.docs[index]['FirstName']),
+                  subtitle: Text(snapshot.data!.docs[index]['SecondName']),
                 );
               });
         },
@@ -65,11 +96,11 @@ class _HomeListScreenState extends State<HomeListScreen> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextField(
-                    controller: _name,
+                    controller: _firstName,
                     textInputAction: TextInputAction.next,
                     keyboardType: TextInputType.text,
                     decoration: InputDecoration(
-                        hintText: "Name",
+                        hintText: "First Name",
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(25))),
                   ),
@@ -77,11 +108,11 @@ class _HomeListScreenState extends State<HomeListScreen> {
                     height: 10,
                   ),
                   TextField(
-                    controller: _email,
-                    keyboardType: TextInputType.emailAddress,
+                    controller: _secondName,
                     textInputAction: TextInputAction.done,
+                    keyboardType: TextInputType.text,
                     decoration: InputDecoration(
-                        hintText: "Email",
+                        hintText: "Second Name",
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(25))),
                   ),
@@ -94,13 +125,17 @@ class _HomeListScreenState extends State<HomeListScreen> {
                     color: Colors.blueAccent.shade100,
                     textColor: Colors.white,
                     onPressed: () {
-                      if (_email.text == "" || _name.text == "") return;
+                      if (_secondName.text == "" || _firstName.text == "")
+                        return;
                       FirebaseFirestore.instance
-                          .collection('user')
-                          .add({"Name": _name.text, "Email": _email.text});
+                          .collection(user.email.toString())
+                          .add({
+                        "FirstName": _firstName.text,
+                        "SecondName": _secondName.text
+                      });
                       setState(() {
-                        _email.text = "";
-                        _name.text = "";
+                        _secondName.text = "";
+                        _firstName.text = "";
                       });
                       Navigator.pop(context);
                     },
@@ -115,14 +150,14 @@ class _HomeListScreenState extends State<HomeListScreen> {
 
   void _deleteData(snapshot, index) {
     FirebaseFirestore.instance
-        .collection('user')
+        .collection(user.email.toString())
         .doc(snapshot.data!.docs[index].reference.id)
         .delete();
   }
 
-  void _editData(name, email, id) {
-    _name.text = name;
-    _email.text = email;
+  void _editData(firstName, secondName, id) {
+    _firstName.text = firstName;
+    _secondName.text = secondName;
     showDialog(
         context: context,
         builder: (context) {
@@ -134,7 +169,7 @@ class _HomeListScreenState extends State<HomeListScreen> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextField(
-                    controller: _name,
+                    controller: _firstName,
                     textInputAction: TextInputAction.next,
                     keyboardType: TextInputType.text,
                     decoration: InputDecoration(
@@ -145,8 +180,8 @@ class _HomeListScreenState extends State<HomeListScreen> {
                     height: 10,
                   ),
                   TextField(
-                    controller: _email,
-                    keyboardType: TextInputType.emailAddress,
+                    controller: _secondName,
+                    keyboardType: TextInputType.text,
                     textInputAction: TextInputAction.done,
                     decoration: InputDecoration(
                         border: OutlineInputBorder(
@@ -161,14 +196,18 @@ class _HomeListScreenState extends State<HomeListScreen> {
                     color: Colors.blueAccent.shade100,
                     textColor: Colors.white,
                     onPressed: () {
-                      if (_email.text == "" || _name.text == "") return;
+                      if (_secondName.text == "" || _firstName.text == "")
+                        return;
                       FirebaseFirestore.instance
                           .collection('user')
                           .doc(id)
-                          .update({"Name": _name.text, "Email": _email.text});
+                          .update({
+                        "Name": _firstName.text,
+                        "Email": _secondName.text
+                      });
                       setState(() {
-                        _email.text = "";
-                        _name.text = "";
+                        _secondName.text = "";
+                        _firstName.text = "";
                       });
                       Navigator.pop(context);
                     },
