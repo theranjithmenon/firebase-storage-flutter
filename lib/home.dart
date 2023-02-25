@@ -58,11 +58,8 @@ class _HomeListScreenState extends State<HomeListScreen> {
           if (snapshot.data!.docs.isEmpty) {
             return const Center(child: Text("empty"));
           }
-          if(snapshot.connectionState == ConnectionState.waiting){
-            return const Center(child: CircularProgressIndicator());
-          }
           return ListView.builder(
-              itemCount: snapshot.data?.docs.length,
+              itemCount: snapshot.data!.docs.length,
               itemBuilder: (context, index) {
                 return ListTile(
                   leading: IconButton(
@@ -202,11 +199,11 @@ class _HomeListScreenState extends State<HomeListScreen> {
                       if (_secondName.text == "" || _firstName.text == "")
                         return;
                       FirebaseFirestore.instance
-                          .collection('user')
+                          .collection(user.email.toString())
                           .doc(id)
                           .update({
-                        "Name": _firstName.text,
-                        "Email": _secondName.text
+                        "FirstName": _firstName.text,
+                        "SecondName": _secondName.text
                       });
                       setState(() {
                         _secondName.text = "";

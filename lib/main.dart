@@ -23,22 +23,13 @@ class MyApp extends StatelessWidget {
         home: StreamBuilder<User?>(
           stream: FirebaseAuth.instance.authStateChanges(),
           builder: (context, AsyncSnapshot snapshot) {
-            if (snapshot.hasError) {
-              return Center(child: Text(snapshot.error.toString()));
-            }
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
             if (snapshot.connectionState == ConnectionState.active) {
-              if (snapshot.data == null) {
-                return const LogInScreen();
-              } else {
+              if (snapshot.hasData) {
                 return const HomeListScreen();
+              } else {
+                return const LogInScreen();
               }
-            }
-            else{
+            } else {
               return const Center(child: Text('Something went wrong!!'));
             }
           },
