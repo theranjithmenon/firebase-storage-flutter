@@ -55,8 +55,11 @@ class _HomeListScreenState extends State<HomeListScreen> {
             .collection(user.email.toString())
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.data!.docs.length == 0) {
+          if (snapshot.data!.docs.isEmpty) {
             return const Center(child: Text("empty"));
+          }
+          if(snapshot.connectionState == ConnectionState.waiting){
+            return const Center(child: CircularProgressIndicator());
           }
           return ListView.builder(
               itemCount: snapshot.data?.docs.length,
