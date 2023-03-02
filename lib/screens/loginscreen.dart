@@ -1,4 +1,4 @@
-import 'package:firebase/googleSignIn.dart';
+import 'package:firebase/services/googleSignIn.dart';
 import 'package:flutter/material.dart';
 
 class LogInScreen extends StatelessWidget {
